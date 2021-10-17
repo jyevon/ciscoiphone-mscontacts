@@ -1,14 +1,15 @@
-<CiscoIPPhoneMenu>
-    <Title>Outlook-Kontakte</Title>
 <?php
     require_once(__DIR__ . "/shared.php");
     
+    header("Content-type: text/xml; charset=utf-8");
+    
     if($storage->get("refresh_token") === false) { // request access
 ?>
-    <MenuItem>
-		<Name>BITTE NEU AUTHENTIFIZIEREN</Name>
-		<URL></URL>
-	</MenuItem>
+<CiscoIPPhoneText>
+    <Title>Outlook-Kontakte</Title>
+    <Prompt>Bitte an PC neu authentifizieren unter</Prompt>
+    <Text><?php echo str_replace("\\", '/', "https://" . $_SERVER['HTTP_HOST'] . substr(__DIR__, strlen($_SERVER['DOCUMENT_ROOT']))); ?></Text>
+</CiscoIPPhoneText>
 <?php
     }else{
         if($storage->get("access_token_expiry") <= time() || $storage->get("access_token") === false) {
@@ -34,7 +35,16 @@
         }
 
         $query = "https://graph.microsoft.com/v1.0/me/contacts";
+        if(isset($_GET['id'])) {
+            $query .= '/' . $_GET['id'];
+        }
+        
+        $new_url = htmlspecialchars(current_url());
+        $new_url .= (strrpos($new_url, '?') !== false) ? '&amp;' : '?';
+
         $value = array();
+        $started = false;
+        $results = 0;
         while($query !== null) {
             $response = send_get($query, "Authorization: Bearer " . $storage->get("access_token"));
     
@@ -46,53 +56,97 @@
                 var_dump($json);
             }
     
-            $j = 0;
-            foreach($json->value as $contact) {
-                
-                $numbers = array();
-                
-                $name = $contact->displayName;
-                if($name === "") {
-                    $name = $contact->companyName;
+            @$query = $json->{'@odata.nextLink'};
+    
+            if(isset($json->value)) { // multiple results / list
+                if(!$started) {
+                    $started = true;
+?>
+<CiscoIPPhoneMenu>
+    <Title>Outlook-Kontakte</Title>
+<?php
                 }
-                
-                if(count($contact->homePhones) == 1) {
-                    $numbers[$name . ' (privat)'] = $contact->homePhones[0];
-                }else{
-                    for($i = 0; $i < count($contact->homePhones); $i++) {
-                        $numbers[$name . ' (privat ' . ($i + 1) . ')'] = $contact->homePhones[$i];
+                foreach($json->value as $contact) {
+                    $numbers = array();
+                    
+                    $name = $contact->displayName; // SORT ALPHABETICALLY?
+                    if($name === "") {
+                        $name = $contact->companyName;
                     }
-                }
-                
-                if(count($contact->businessPhones) == 1) {
-                    $numbers[$name . ' (geschäftlich)'] = $contact->businessPhones[0];
-                }else{
-                    for($i = 0; $i < count($contact->businessPhones); $i++) {
-                        $numbers[$name . ' (geschäftlich ' . ($i + 1) . ')'] = $contact->businessPhones[$i];
+                    
+                    if(count($contact->homePhones) > 0 || count($contact->businessPhones) > 0 || $contact->mobilePhone !== null) {
+?>
+    <MenuItem>
+        <Name><?php echo htmlspecialchars($name); ?></Name>
+        <URL><?php echo $new_url . "id=" . urlencode($contact->id); ?></URL>
+    </MenuItem>
+<?php
+                        $results++;
+                        
+                        if($results == 100) { // "IP phones allow a maximum of 100 MenuItems" - IMPLEMENT MULTIPLE RESULT PAGES NAVIGATED USING SOFTKEYS
+                            $query = null;
+                            break;
+                        }
                     }
                 }
 
-                if($contact->mobilePhone !== null) {
-                    $numbers[$name . ' (Mobil)'] = $contact->mobilePhone;
+                if($query == null) {
+?>
+</CiscoIPPhoneMenu>
+<?php
+                }
+            }else{ // single result
+                $numbers = array();
+                
+                $name = $json->displayName;
+                if($name === "") {
+                    $name = $json->companyName;
+                }
+
+                if(!$started) {
+                    $started = true;
+?>
+<CiscoIPPhoneDirectory>
+    <Title>Outlook-Kontakt</Title>
+    <Prompt><?php echo htmlspecialchars(substr($name, 0, 33/* =max length*/)); ?></Prompt>
+<?php
+                }
+                
+                if(count($json->homePhones) == 1) {
+                    $numbers['Privat'] = $json->homePhones[0];
+                }else{
+                    for($i = 0; $i < count($json->homePhones); $i++) {
+                        $numbers['Privat ' . ($i + 1)] = $json->homePhones[$i];
+                    }
+                }
+                
+                if(count($json->businessPhones) == 1) {
+                    $numbers['Geschäftlich'] = $json->businessPhones[0];
+                }else{
+                    for($i = 0; $i < count($json->businessPhones); $i++) {
+                        $numbers['Geschäftlich ' . ($i + 1)] = $json->businessPhones[$i];
+                    }
+                }
+
+                if($json->mobilePhone !== null) {
+                    $numbers['Mobil'] = $json->mobilePhone;
                 }
     
                 foreach ($numbers as $k => $v) {
 ?>
-    <MenuItem>
-        <Name><?php echo $k; ?></Name>
-        <URL>Dial:<?php echo $v; ?></URL>
-    </MenuItem>
+    <DirectoryEntry>
+		<Name><?php echo $k; ?></Name>
+		<Telephone><?php echo $v; ?></Telephone>
+	</DirectoryEntry>
 <?php
                 }
 
-                $j++;
-                if($j >= 5/*6*/) { // DEBUG: TEXT MAX SIZE PHONEBOOK - 160 entries max? 7821 - max between 92-160
-                    break;
+                if($query == null) {
+?>
+</CiscoIPPhoneDirectory>
+<?php
                 }
             }
-    
-            @$query = $json->{'@odata.nextLink'};
         }
     }// IMPLEMENT MULTIPLE LOOKUPS BY INTRODUCING USER-ID
 ?>
-</CiscoIPPhoneMenu>
