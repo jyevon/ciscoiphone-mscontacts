@@ -1,2 +1,4 @@
 config.php
 storage/*
+!storage/.htaccess
+!storage/index.php

@@ -1,0 +1,42 @@
+html, body {
+    margin: 0;
+    padding: 0;
+
+    background-color: #e1e1e1;
+
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+div#page_container {
+    margin: 10px auto 10px auto;
+
+    max-width: 100%;
+    width: 700px;
+
+    border: 1px solid #646464;
+    border-radius: 0.1em;
+
+    padding: 10px;
+    background-color: #f7f7f7;
+}
+
+div#page_container > h1 {
+    text-align: center;
+    margin: 0.3em 0 0.3em 0;
+}
+
+select {
+    width: 100%;
+}
+input[type=text],
+input[type=tel] {
+    width: calc(100% - 8px);
+}
+
+table, td, th {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 0.2em;
+}

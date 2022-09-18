@@ -1,6 +1,5 @@
 <?php
-    require_once(__DIR__ . "/config.php");
-
+    // ========= Storage =========
     class Storage {
         private $dir;
         private $hash;
@@ -15,7 +14,7 @@
         }
 
         private function file($key) {
-            $file = $this->dir . ($this->hash ? md5($key) : str_replace('/', '_', $key));
+            $file = $this->dir . ($this->hash ? sha1($key) : urlencode($key));
 
             return $file;
         }
@@ -45,8 +44,12 @@
         }
     }
 
-    $storage = new Storage(__DIR__ . "/storage/", false);
-
+    // ========= URLs =========
+    /**
+     * Checks whether the user is connected over ssl
+     * 
+     * @return bool
+     */
     function is_ssl() { // stolen from wordpress
         if(isset( $_SERVER['HTTPS'])) {
             // Check https info
@@ -60,11 +63,66 @@
 
         return false;
     }
+
+    /**
+     * Gets the path to the root directory (if this file is in it)
+     * 
+     * @param boolean	$absolute	Whether the path should be absolute, otherwise relative to the querried file
+     * @param boolean	$force_ssl	Whether the protocol should be changed to ssl
+     * 
+     * @return string the path to the root directory
+     */
+    function pageroot(bool $absolute = false, bool $force_ssl = false) {
+        // Subtract path of querried file from basedir
+        $pageroot = substr(realpath($_SERVER['DOCUMENT_ROOT'] . $_SERVER['PHP_SELF']), strlen(realpath(__DIR__ . "/../")));
+
+        // Count all seperators ('/' or '\')
+        $slashes = substr_count(str_replace("\\", '/', $pageroot), '/');
+        
+        if($absolute) {
+            // Absolute
+
+            // Get current URL
+            $pageroot = current_url($force_ssl);
+
+            // Remove as many parts as are in difference
+            for($i = 0; $i < $slashes; $i++) {
+                $pageroot = substr($pageroot, 0, strrpos($pageroot, "/"));
+            }
+
+            return $pageroot . "/";
+        }else{
+            // Relative
+            if($slashes != 1) {
+                $pageroot = "";
+
+                // Go up as many directories as parts are in difference
+                for($i = 1; $i < $slashes; $i++) {
+                    $pageroot .= "../";
+                }
+            }else{
+                // Select the current directory
+                $pageroot = "./";
+            }
+
+            return $pageroot;
+        }
+    }
+
+    /**
+     * Gets the querried url
+     * 
+     * @param bool	$force_ssl Whether the protocol should be replaced by https
+     * 
+     * @return string	the url
+     */
     function current_url(bool $force_ssl = false) {
         $force_ssl = $force_ssl ? true : is_ssl();
 
         return ($force_ssl ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     }
+
+    // ========= HTTP requests =========
     function send_post(string $url, $data, string $header = "") {
         $options = array(
             'http' => array(
@@ -80,6 +138,7 @@
 
         return array($http_response_header, $result);
     }
+
     function send_get(string $url, string $header = "") {
         $options = array(
             'http' => array(
@@ -94,13 +153,4 @@
 
         return array($http_response_header, $result);
     }
-    
-    $redirect_uri = current_url();
-    $query = strpos($redirect_uri, "?");
-    if($query !== false) {
-        $redirect_uri = substr($redirect_uri, 0, $query);
-    }
-    $scope = "offline_access user.read contacts.read";
-
-    // https://docs.microsoft.com/en-us/graph/auth-v2-user
 ?>
