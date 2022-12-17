@@ -8,10 +8,10 @@ html, body {
 }
 
 div#page_container {
-    margin: 10px auto 10px auto;
+    width: calc(100% - 42px); /*100% - border - padding - vert. margin*/
+    max-width: 700px;
 
-    max-width: 100%;
-    width: 700px;
+    margin: 10px auto 10px auto;
 
     border: 1px solid #646464;
     border-radius: 0.1em;
@@ -33,10 +33,54 @@ input[type=tel] {
     width: calc(100% - 8px);
 }
 
-table, td, th {
+table {
+    width: 100%;
+}
+table, th, td {
     border: 1px solid black;
     border-collapse: collapse;
 }
 th, td {
-    padding: 0.2em;
+    padding: 0.2em 0.5em;
+}
+
+img {
+	max-width: 100%;
+}
+
+
+/*** Dark Mode (colors from Firefox's about:debugging) ***/
+@media (prefers-color-scheme: dark) {
+	html, body {
+        background-color: #1c1b22;
+        color: #eeeeee;
+    }
+
+    div#page_container {
+        background-color: #23222b;
+    }
+
+    table, td, th {
+        border-color: #ffffff;
+    }
+
+	a {
+		color: #00ddff;
+	}
+	a:hover {
+		color: #80ebff;
+	}
+	a:active {
+		color: #aaf2ff;
+	}
+
+    /*button,
+    input[type=submit] {
+        background-color: #484854;
+        color: #ffffff;
+    }
+    button:hover,
+    input[type=submit]:hover {
+        background-color: #5c5c6a;
+    }*/
 }
