@@ -20,8 +20,21 @@
                 für Cisco IP-Phones
             </h1>
 <?php
-    $key = get_key();    
-    if($key === false) {
+    $key = get_key();
+    if($key !== false && get_access_token($key) === false){
+?>
+            Unter diesem Schlüssel wurde kein Konto gefunden oder es muss neu verknüpft werden. Das können Sie
+            <a href="<?php echo $url_oauth . "?key=" . $key; ?>">hier</a>
+            tun.
+<?php
+    }else{
+        if($key !== false) {
+            if(isset($_GET['state']) && $_GET['state'] == "authorized") {
+?>
+            <p>Microsoft-Konto erfolgreich verknüpft!</p>
+<?php
+            }
+        }else{
 ?>
             <form method="GET">
                 <p>
@@ -43,52 +56,37 @@
                     <button id="submit" type="submit">Übersicht anzeigen</button>
                 </p>
             </form>
-
-            <br/>
-
-            <h2>Ohne Schlüssel nutzbare Funktionen</h2>
-            <ul>
-                <li> <a href="<?php echo $url_call; ?>">Anruf auf Telefon starten (Zugangsdaten des Telefons benötigt)</a> </li>
-            </ul>
-
-            <h3>URL für SEP&lt;MAC&gt;.cnf.xml</h3>
-            <table>
-                <tr>
-                    <th>authenticationURL</th>
-                    <td><?php echo $url_cisco_auth ?></td>
-                </tr>
-            </table>
-<?php
-    }else if(get_access_token($key) === false){
-?>
-            Unter diesem Schlüssel wurde kein Konto gefunden oder es muss neu verknüpft werden. Das können Sie
-            <a href="<?php echo $url_oauth . "?key=" . $key; ?>">hier</a>
-            tun.
-<?php
-    }else{
-        if(isset($_GET['state']) && $_GET['state'] == "authorized") {
-?>
-            <p>Microsoft-Konto erfolgreich verknüpft!</p>
 <?php
         }
 ?>
-            <h2>Per Browser nutzbare Funktionen</h2>
+            <?php if($key !== false) { ?>
+                <h2>Per Browser nutzbare Funktionen</h2>
+            <?php }else{ ?>
+                <h2>Ohne Schlüssel nutzbare Funktionen</h2>
+            <?php } ?>
             <ul>
-                <li> <a href="<?php echo $url_call . "?key=" . $key; ?>">Anruf auf Telefon starten (Zugangsdaten des Telefons benötigt)</a> </li>
-                <li> <a href="<?php echo $url_vcard . $key; ?>">vCard-Export der Kontakte</a> </li>
-                <li> <a href="<?php echo $url_oauth . "?key=" . $key; ?>">dieses Microsoft-Konto neu verknüpfen</a> </li>
-                <li> <a href="<?php echo $url_oauth; ?>">ein weiteres Microsoft-Konto verknüpfen</a> </li>
+                <li> <a href="<?php echo $url_call . ($key !== false ? "?key=" . $key : ""); ?>">Anruf auf Telefon starten (Zugangsdaten des Telefons benötigt)</a> </li>
+                <?php if($key !== false) { ?>
+                    <li> <a href="<?php echo $url_vcard . $key; ?>">vCard-Export der Kontakte</a> </li>
+                    <li> <a href="<?php echo $url_oauth . "?key=" . $key; ?>">dieses Microsoft-Konto neu verknüpfen</a> </li>
+                    <li> <a href="<?php echo $url_oauth; ?>">ein weiteres Microsoft-Konto verknüpfen</a> </li>
+                <?php } ?>
             </ul>
 
-            <br/>
-
-            <h2>URLs für SEP&lt;MAC&gt;.cnf.xml</h2>
+            <?php if($key !== false) { ?>
+                <br/>
+                <h2>URLs für SEP&lt;MAC&gt;.cnf.xml</h2>
+            <?php }else{ ?>
+                <h3>URL für SEP&lt;MAC&gt;.cnf.xml</h3>
+            <?php } ?>
             <table>
                 <!-- TODO use secure<...>URL instead? -->
-                <tr>
-                    <th>directoryURL</th>
-                    <td><?php echo $url_cisco_dir . $key; ?></td>
-                </tr>
+                <?php if($key !== false) { ?>
+                    <tr>
+                        <th>directoryURL</th>
+                        <td><?php echo $url_cisco_dir . $key; ?></td>
+                    </tr>
+                <?php } ?>
                 
                 <tr>
                     <th>authenticationURL</th>

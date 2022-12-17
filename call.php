@@ -22,19 +22,25 @@
         <div id="page_container">
             <h1>Anruf starten</h1>
 <?php
-    $key = get_key();
-    if($key !== false) {
-        $access_token = get_access_token($key);
-        if($access_token === false) { // request access
+    $keys = array();
+    if(empty($_GET['key']))  $_GET['key'] = CALL_DEFAULT_KEY;
+    if(!empty($_GET['key'])) {
+        $keys = explode(",", $_GET['key']);
+        foreach ($keys as $key) {
+            if(array_key_exists($key, FRITZCO_PHONEBOOKS))  continue;
+
+            $access_token = get_access_token($key);
+            if($access_token === false) { // request access
 ?>
             <p> <a href="<?php echo $url_oauth; ?>">
                 Bitte Microsoft-Konto neu verbinden für Abruf der Kontaktliste!
             </a> </p>
 <?php
+            }
         }
     }
 ?>
-            <form method="POST" onsubmit="submit(this)">
+            <form method="POST" onsubmit="submitXML(this)">
                 <p>
                     <label for="target">Telefon:</label><br/>
                     <select id="target" required autofocus >
@@ -64,49 +70,94 @@
                     <input id="tel" type="tel" required list="contacts" value="<?php echo @$_GET['num']; ?>" />
                     <datalist id="contacts">
 <?php 
-    if($key !== false && $access_token !== false) {
-        query_contacts($access_token, function($json, $last_page) {    
-            if(isset($json->value)) { // multiple results / list
-                foreach($json->value as $contact) {
-                    $numbers = array();
+    $suggestions = array();
+    
+    foreach ($keys as $key) {
+        if(array_key_exists($key, FRITZCO_PHONEBOOKS)) {
+            if(!empty(FRITZCO_PHONEBOOKS[$key]["url"]))  $url = FRITZCO_PHONEBOOKS[$key]["url"];
+            else  $url = FRITZCO_URL;
 
-                    if(count($contact->homePhones) == 1) {
-                        if(!empty($contact->homePhones[0]))  $numbers['Privat'] = $contact->homePhones[0];
-                    }else{
-                        for($i = 0; $i < count($contact->homePhones); $i++) {
-                            if(empty($contact->homePhones[$i]))  continue;
-                            $numbers['Privat ' . ($i + 1)] = $contact->homePhones[$i];
-                        }
-                    }
+            $book = @file_get_contents($url . "/books/" . FRITZCO_PHONEBOOKS[$key]["bookid"] . ".xml");
+            if(DEBUG)  var_dump($book);
+
+            if($book === false)  continue;
+
+            $xml = simplexml_load_string($book);
+            if(DEBUG)  var_dump($xml);
+
+            foreach($xml->phonebook->contact as $contact) {
+                $name = $contact->person->realName;
+
+                foreach($contact->telephony->number as $number) {
+                    $num = preg_replace("/[^+*#\d]/", "", $number);
+                    if(in_array($num, $suggestions))  continue;
                     
-                    if(count($contact->businessPhones) == 1) {
-                        if(!empty($contact->businessPhones[0]))  $numbers['Geschäftlich'] = $contact->businessPhones[0];
-                    }else{
-                        for($i = 0; $i < count($contact->businessPhones); $i++) {
-                            if(empty($contact->businessPhones[$i]))  continue;
-                            $numbers['Geschäftlich ' . ($i + 1)] = $contact->businessPhones[$i];
-                        }
-                    }
+                    $label = $number->attributes()["type"];
+                    if($label == "home")  $label = "Privat";
+                    elseif($label == "work")  $label = "Geschäftlich";
+                    elseif($label == "mobile")  $label = "Mobil";
+                    elseif($label == "fax_work")  $label = "Fax Geschäftlich";
 
-                    if(!empty($contact->mobilePhone)) {
-                        $numbers['Mobil'] = $contact->mobilePhone;
-                    }
-        
-                    if(count($numbers) > 0) {
-                        $name = $contact->displayName;
-                        if($name === "")  $name = $contact->companyName;
-                        
-                        foreach($numbers as $label => $number) {
 ?>
                         <option value="<?php echo $number; ?>">
-                            <?php echo $name . ' (' . $label . ') - ' . preg_replace("/[^+\d]/", "", $number); ?>
+                            <?php echo $name . ' (' . $label . ') - ' . $num; ?>
                         </option>
 <?php
+                }
+            }
+
+            continue;
+        }
+
+        $access_token = get_access_token($key);
+        if($access_token !== false) {
+            query_contacts($access_token, function($json, $last_page) {    
+                global $suggestions;
+
+                if(isset($json->value)) { // multiple results / list
+                    foreach($json->value as $contact) {
+                        $numbers = array();
+
+                        if(count($contact->homePhones) == 1) {
+                            if(!empty($contact->homePhones[0]))  $numbers['Privat'] = $contact->homePhones[0];
+                        }else{
+                            for($i = 0; $i < count($contact->homePhones); $i++) {
+                                if(empty($contact->homePhones[$i]))  continue;
+                                $numbers['Privat ' . ($i + 1)] = $contact->homePhones[$i];
+                            }
+                        }
+                        
+                        if(count($contact->businessPhones) == 1) {
+                            if(!empty($contact->businessPhones[0]))  $numbers['Geschäftlich'] = $contact->businessPhones[0];
+                        }else{
+                            for($i = 0; $i < count($contact->businessPhones); $i++) {
+                                if(empty($contact->businessPhones[$i]))  continue;
+                                $numbers['Geschäftlich ' . ($i + 1)] = $contact->businessPhones[$i];
+                            }
+                        }
+
+                        if(!empty($contact->mobilePhone)) {
+                            $numbers['Mobil'] = $contact->mobilePhone;
+                        }
+            
+                        if(count($numbers) > 0) {
+                            $name = $contact->displayName;
+                            if($name === "")  $name = $contact->companyName;
+                            
+                            foreach($numbers as $label => $number) {
+                                $num = preg_replace("/[^+*#\d]/", "", $number);
+                                array_push($suggestions, $num);
+?>
+                        <option value="<?php echo $number; ?>">
+                            <?php echo $name . ' (' . $label . ') - ' . $num; ?>
+                        </option>
+<?php
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 ?>
                     </datalist>
@@ -121,7 +172,7 @@
         </div>
 
         <script type="text/javascript">
-            function submit(form) {
+            function submitXML(form) {
                 var target = document.getElementById("target").value;
                 var https = document.getElementById("https").checked;
                 var tel = document.getElementById("tel").value;

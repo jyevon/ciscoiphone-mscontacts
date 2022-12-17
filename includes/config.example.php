@@ -23,6 +23,23 @@
         )
     );
 
+    // --- fritzco ---
+    const FRITZCO_URL = "https://example.com/fritzco";
+    const FRITZCO_PHONEBOOKS = array(
+        // open genkey.php in browser to get a random key
+        "changeme868d490d4e99" => array(
+            "bookid" => "0"
+            // 'telefonbuch' number from fritzco's directory.config.inc.php
+            // (https://github.com/SkyhawkXava/fritzco/blob/master/config/directory.config.inc.php)
+        ),
+        "random20charhex23159" => array(
+            "url" => "https://another.example.com/fritzco", // if different than FRITZCO_URL
+            "bookid" => "240"
+            // phone books synced with your FRITZ!Box from an external source usually start at 240
+        )
+    );
+
     // --- Misc ---
+    const CALL_DEFAULT_KEY = ""; // Key(s) of addressbooks loaded when none provided in URL
     const DEBUG = false;
 ?>

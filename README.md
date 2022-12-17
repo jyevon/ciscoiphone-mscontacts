@@ -21,7 +21,7 @@ located in [`cisco/`](cisco/)
 1. Clone or download this repository and put the files on a web server that supports PHP (tested on apache2 with libapache2-mod-php and libapache2-mod-fcgid).
 2. [Register an app for OAuth 2.0 in the Microsoft Azure app registration portal](https://docs.microsoft.com/en-us/graph/auth-v2-user#1-register-your-app).
 3. There, add the URL of the [`oauth-grant.php`](oauth-grant.php) on your web server as a redirect URI. For example, `https://example.com/ipphones/oauth-grant.php`.
-4. Rename [`config.example.php`](includes/config.example.php) in [`includes`](includes/) to `config.php` and replace the default values with your Client ID and Client Secret.
+4. Rename or copy [`config.example.php`](includes/config.example.php) in [`includes`](includes/) to `config.php` and replace the default values with your Client ID and Client Secret.
 5. Also, add your IP Phones if you want to use [`call.php`](#browser-endpoints) or [`cisco/authenticate.php`](#endpoints-for-cisco-ip-phones).
    - [`authenticate.php`](cisco/authenticate.php) requires `devicename`, `username` and `password` per phone,
    - [`call.php`](#notes-on-callphpcallphp) uses `label`, `devicename` (and optionally `host`)  
@@ -35,16 +35,20 @@ located in [`cisco/`](cisco/)
    (e. g. `https://example.org/ipphones/cisco/directory.php?key=`f53fe305ad73b3ff33cf)
 
 # Notes on [`call.php`](call.php)
+Suggestions are based on contacts of Microsoft account(s) stored under the provided key(s) (see table below).
+
+Also, [phone books of a FRITZ!Box router](https://service.avm.de/help/en/FRITZ-Box-Fon-WLAN-7490/019/hilfe_fon_telefonbuch) can be integrated using [fritzco](https://github.com/SkyhawkXava/fritzco), see [`config.php`](includes/config.example.php). However, note that fritzco's phone books won't be supported in [`directory.php`](cisco/directory.php) since that's a function fritzco itself offers.
+
 Using query parameters in the URL, you can prefill the input fields:
 
 | parameter    | default                           | example value          |
 | ------------ | --------------------------------- | ---------------------- |
-| `key`        | no suggestions based on contacts  | `f53fe305ad73b3ff33cf` |
+| `key`        | suggestions based on contacts from CALL_DEFAULT_KEY in [`config.php`](includes/config.example.php) | `f53fe305ad73b3ff33cf` <br/> (comma-separated if multiple) |
 | `devicename` | no selection                      | `SEP1304E58F0643`      |
 | `num`        | empty                             | `+12065550100` <br/>(you may need to [URL encode](https://www.urlencoder.org/) this) |
 | `ssl`        | active                            | `0` or `1`             |
 
-Example: `https://example.org/ipphones/call.php?key=f53fe305ad73b3ff33cf&devicename=SEP1304E58F0643&num=+12065550100&ssl=1`
+Example: `https://example.org/ipphones/call.php?key=f53fe305ad73b3ff33cf,bf674bddac25380a20bc&devicename=SEP1304E58F0643&num=+12065550100&ssl=1`
 
 # Notes on storage of keys & connected Microsoft accounts
 The information on connected Microsoft accounts is stored in [`storage/`](storage/) on your web server, prefixed with the corresponding key:

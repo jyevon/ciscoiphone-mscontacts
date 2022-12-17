@@ -19,7 +19,7 @@
 
         if(!isset($_GET['key']) || preg_match("/[\da-f]{20,}/", $_GET['key']) !== 1) {
             // generate new key
-            $_GET['key'] = substr(sha1(microtime() . random_int(0, 1000)), 0, 20);
+            $_GET['key'] = gen_key();
         }
 
         $storage->set($_GET['key'] . "_access_token", $response->access_token);

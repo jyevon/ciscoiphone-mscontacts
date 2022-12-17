@@ -35,7 +35,7 @@
 
         $started = false;
         $results = 0;
-        query_contacts($access_token, function($json, $last_page) {    
+        query_contacts($access_token, function($json, $last_page) { // TODO implement search
             global $new_url;
             global $started;
             global $results;

@@ -13,8 +13,11 @@
     $url_cisco_auth = pageroot(true) . "cisco/authenticate.php";
     
 
+    function gen_key() {
+        return substr(sha1(microtime() . random_int(0, 1000)), 0, 20);
+    }    
     function get_key() {
-        if(empty($_GET['key']))  return false;        
+        if(empty($_GET['key']))  return false;
         return $_GET['key'];
     }
 
@@ -58,6 +61,8 @@
         if(isset($_GET['id'])) {
             $query .= '/' . urlencode($_GET['id']);
         }else if(isset($_GET['search'])){
+            // BUG search with > 1 result pages throwing error on 2nd page:
+            // "The following parameters are not supported with change tracking over the 'Contacts' resource: '$orderby, $filter, $select, $expand, $search, $top'."
             $query  .= '?$search="' . urlencode($_GET['search']) . '"';
         }else{
             $query .= '?$orderby=displayName%20asc';

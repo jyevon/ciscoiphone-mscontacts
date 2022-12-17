@@ -1,5 +1,7 @@
 <?php
     require(__DIR__ . "/includes/shared.php");
+
+    // TODO carddav endpoint
     
     $key = get_key();
     if($key === false) { // request key
