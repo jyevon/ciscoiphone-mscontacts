@@ -1,5 +1,5 @@
 <?php
-    // Prevent directory from beeing browsable on webservers disregarding .htaccess
+    // Prevent directory from being browsable on web servers disregarding .htaccess
     http_response_code(403);
     echo "Forbidden";
 ?>

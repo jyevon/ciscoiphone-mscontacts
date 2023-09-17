@@ -67,7 +67,7 @@
     /**
      * Gets the path to the root directory (if this file is in it)
      * 
-     * @param boolean	$absolute	Whether the path should be absolute, otherwise relative to the querried file
+     * @param boolean	$absolute	Whether the path should be absolute, otherwise relative to the queried file
      * @param boolean	$force_ssl	Whether the protocol should be changed to ssl
      * 
      * @return string the path to the root directory
@@ -110,7 +110,7 @@
     }
 
     /**
-     * Gets the querried url
+     * Gets the queried url
      * 
      * @param bool	$force_ssl Whether the protocol should be replaced by https
      * 

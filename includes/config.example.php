@@ -5,7 +5,8 @@
     // Don't forget to add redirect uri(s) at the Azure Portal
     
     // --- Cisco IP Phones ---
-    // used by authenticate.php & call.php
+    // authenticate.php requires devicename, username and password
+    // call.php uses label, devicename (and optionally host)
     const PHONES = array(
         array(
             "label" => "Example Phone 1",
@@ -29,13 +30,14 @@
         // open genkey.php in browser to get a random key
         "changeme868d490d4e99" => array(
             "bookid" => "0"
-            // 'telefonbuch' number from fritzco's directory.config.inc.php
+            // 'telefonbuch' number from fritzco's directory.config.inc.php or higher
             // (https://github.com/SkyhawkXava/fritzco/blob/master/config/directory.config.inc.php)
         ),
         "random20charhex23159" => array(
             "url" => "https://another.example.com/fritzco", // if different than FRITZCO_URL
             "bookid" => "240"
             // phone books synced with your FRITZ!Box from an external source usually start at 240
+            // I added support for these in my fork of fritzco: https://github.com/jyevon/fritzco/tree/directory
         )
     );
 

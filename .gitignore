@@ -1,4 +1,4 @@
-config.php
-storage/*
-!storage/.htaccess
-!storage/index.php
+/includes/config.php
+/storage/*
+!/storage/.htaccess
+!/storage/index.php
